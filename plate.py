@@ -5,6 +5,7 @@ from functools import partial
 from io import StringIO, BytesIO
 import zipfile
 import os
+import os.path
 
 host = 'https://plate.it.uts.edu.au/'
 
@@ -55,6 +56,8 @@ def clone_assessment(path):
     res = r.get(f'{host}/assessment_view.action?subjectId={subject}&assessmentId={assessment}', verify='plate.pem', auth=auth)
     soup = bs(res.text)
     jar_files = list(filter(lambda x: '.jar' in x.get('href'), soup.find_all('a')))
+    if not os.path.exists("testfiles/"):
+        os.mkdir('testfiles/')
     os.mkdir(f'testfiles/{subject}')
     os.mkdir(f'testfiles/{subject}/{assessment}')
     for tag in jar_files:
