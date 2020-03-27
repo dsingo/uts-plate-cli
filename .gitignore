@@ -2,3 +2,4 @@ testfiles/*
 root.pem
 int.pem
 user.crt
+.DS_Store

@@ -49,7 +49,6 @@ def list_assessments():
             print(f"\t{assessment['assessmentId']}\t\t{assessment['score']}")
 
 def clone_assessment(path):
-    path = '48024/lab2'
     assert len(path.split('/')) == 2, "Invalid Subject and Assessment Combination"
     subject, assessment = path.split('/')
     print(f"🔨 Cloning assessment into  {subject}/{assessment}/")
@@ -66,21 +65,24 @@ def clone_assessment(path):
     print(f"✅ Done! The assessment was successfully downloaded.")
 
 def upload_assessment(path):
-    path = '48024/lab2'
     assert len(path.split('/')) == 2, "Invalid Subject and Assessment Combination"
     subject, assessment = path.split('/')
     byteFile = BytesIO()
-    archive = zipfile.ZipFile('submission.jar', mode="w", compression=zipfile.ZIP_DEFLATED)
+    archive = zipfile.ZipFile(byteFile, mode="w", compression=zipfile.ZIP_DEFLATED)
     path = 'testfiles/'+path
     for root, dirs, files in os.walk(path):
         for file in files:
             archive.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), os.path.join(path, '.')))
+    archive.close()
     files = {'upload':( 'submission.jar', byteFile.getvalue(), 'application/java-archive')}
+    with open('submission.zip', 'wb') as r:
+        r.write(byteFile.getvalue())
     data = {"upload":"Upload"}
     res = r.post(f'{host}/submission_upload.action?subjectId={subject}&assessmentId={assessment}', files=files, data=data, auth=auth, verify='plate.pem')
     soup = bs(res.text)
     soup
     soup.find_all('fieldset')
+
 
 if __name__ == "__main__":
     list_assessments()
