@@ -5,7 +5,7 @@ from functools import partial
 from io import StringIO, BytesIO
 import zipfile
 import os
-import os.path
+from pathlib import Path
 
 host = 'https://plate.it.uts.edu.au/'
 
@@ -56,13 +56,14 @@ def clone_assessment(path):
     res = r.get(f'{host}/assessment_view.action?subjectId={subject}&assessmentId={assessment}', verify='plate.pem', auth=auth)
     soup = bs(res.text)
     jar_files = list(filter(lambda x: '.jar' in x.get('href'), soup.find_all('a')))
-    if not os.path.exists("testfiles/"):
-        os.mkdir('testfiles/')
-    os.mkdir(f'testfiles/{subject}')
-    os.mkdir(f'testfiles/{subject}/{assessment}')
+    jar_files.extend(list(filter(lambda x: '.zip' in x.get('href'), soup.find_all('a'))))
+    Path(f'testfiles/{subject}/{assessment}').mkdir(parents=True, exist_ok=True)
     for tag in jar_files:
         print(f"📦 Fetching {tag.text} ...")
-        file_res = r.get(tag.get('href'), auth=auth, verify='plate.pem')
+        url = str(tag.get('href'))
+        if url.startswith("/itemAttachment"):
+            url = f"{host}{url}"
+        file_res = r.get(url, auth=auth, verify='plate.pem')
         zip_jar = zipfile.ZipFile(BytesIO(file_res.content))
         zip_jar.extractall(f'testfiles/{subject}/{assessment}')
     print(f"✅ Done! The assessment was successfully downloaded.")
