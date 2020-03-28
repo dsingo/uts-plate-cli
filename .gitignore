@@ -3,3 +3,5 @@ root.pem
 int.pem
 user.crt
 .DS_Store
+.idea/*
+__pycache__/*
