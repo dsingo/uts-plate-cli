@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import argparse
 import requests as r
 from getpass import getpass
 from bs4 import BeautifulSoup as bs
@@ -11,7 +13,7 @@ host = 'https://plate.it.uts.edu.au/'
 auth=(input('Student Id: '), getpass('Password: '))
 
 
-def parse_subjects(a_tag, auth_token):
+def parse_subjects(a_tag, auth_token, auth):
     link = a_tag.get("href")
     cookies = {'JSESSIONID':auth_token}
     subject = link[link.find('?subjectId')+11:]
@@ -36,7 +38,7 @@ def parse_assessment(table_row):
         return -1
 
 
-def list_assessments():
+def list_assessments(auth):
     print("Fetching Assessments... 🚚")
     res = r.get(f'{host}/index_view.action', verify='plate.pem', auth=auth)
     auth_token = res.cookies['JSESSIONID']
@@ -48,7 +50,7 @@ def list_assessments():
         for assessment in subject['assessments']:
             print(f"\t{assessment['assessmentId']}\t\t{assessment['score']}")
 
-def clone_assessment(path):
+def clone_assessment(path, auth):
     assert len(path.split('/')) == 2, "Invalid Subject and Assessment Combination"
     subject, assessment = path.split('/')
     print(f"🔨 Cloning assessment into  {subject}/{assessment}/")
@@ -78,11 +80,13 @@ def upload_assessment(path):
     with open('submission.zip', 'wb') as r:
         r.write(byteFile.getvalue())
     data = {"upload":"Upload"}
-    res = r.post(f'{host}/submission_upload.action?subjectId={subject}&assessmentId={assessment}', files=files, data=data, auth=auth, verify='plate.pem')
-    soup = bs(res.text)
-    soup
-    soup.find_all('fieldset')
+    res = r.post(f'{host}/submission_upload.action?subjectId={subject}&assessmentId={assessment}', files=files, data=data, verify='plate.pem', auth=auth)
 
 
 if __name__ == "__main__":
-    list_assessments()
+    parser = argparse.ArgumentParser(description='List, download and reupload your plate code. ')
+    parser.add_argument("command", help="Enter a command for the plate cli")
+    args = parser.parse_args()
+    auth=(input('Student Id: '), getpass('Password: '))
+    if args.command == 'ls':
+        list_assessments()
